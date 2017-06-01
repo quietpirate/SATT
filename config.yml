@@ -1,0 +1,24 @@
+sattProperties:
+  targetRange: '192.168.1.0/24'
+  sourceIP: '192.168.2.101'
+  viewpoint: 'internal'
+  nmapOn: false
+  nseOn: false
+  nmapDir:
+
+
+nmapProperties:
+  tcpMaxRTT:
+  udpMaxRTT:
+  initial-rtt-timeout:
+  tcpMaxHostGroup: "4"
+  tcpMinHostGroup: "2"
+  udpMaxHostGroup:
+  udpMinHostGroup:
+  max-retries:
+  min-rate:
+  exclude-hosts: '192.168.1.100,192.168.2.101,192.168.2.100,192.168.3.100'
+
+nseProperties:
+  maxRTT: "50"
+  max-retries:

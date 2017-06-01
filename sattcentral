@@ -1,0 +1,55 @@
+#!/usr/bin/env python
+
+
+import sys, getopt
+import os
+import subprocess
+import yaml
+import src.sattnmap
+import src.sattnse
+import src.parsePorts
+
+
+def main(argv):
+
+
+
+    try:
+        opts, args = getopt.getopt(argv,"t:",["targetScope="])
+    except getopt.GetoptError:
+        print 'sattcentral <TargetRange>'
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            print 'Usage: sattcentral'
+            print 'Options: edit the config.yml file'
+            sys.exit()
+        elif opt in ("-n", "--nmaponly"):
+            inputfile = arg
+        elif opt in ("-o", "--ofile"):
+            outputfile = arg
+    configFile = os.path.join(os.path.dirname(__file__), 'config.yml')
+    config = open(configFile, "r")
+    settings = yaml.load(config)
+
+
+
+    targetRange = settings["sattProperties"]["targetRange"]
+    sourceIP = settings["sattProperties"]["sourceIP"]
+    viewpoint = settings["sattProperties"]["viewpoint"]
+    optionsNmapOn = settings["sattProperties"]["nmapOn"]
+    optionsNSEsOn = settings["sattProperties"]["nseOn"]
+#    optionsNessusOn = settings["sattProperties"]["nessusOn"]
+    if optionsNmapOn == True:
+        src.sattnmap.givenTarget(targetRange, sourceIP, viewpoint, configFile)
+
+    if optionsNSEsOn == True:
+        p = subprocess.Popen('rum run nmap2portscan.py --nmap-dir ./ --run > portscan.yml', shell=True)
+        p.communicate()
+        src.parsePorts.parsePorts()
+        src.sattnse.nseMain(targetRange, sourceIP, configFile)
+
+
+if __name__ == "__main__":
+   main(sys.argv[1:])
