@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 import sys, getopt
 import os
 import subprocess
@@ -8,16 +7,28 @@ import yaml
 import src.sattnmap
 import src.sattnse
 import src.parsePorts
+import src.createFileStruc
+import src.executeRemote
+import src.fabfile
+
+def makeLocalDirs(sourceIP, targetRange, optionsCreateFiles):
+    if sourceIP == None and targetRange == None:
+        if optionsCreateFiles == True:
+            cwd = os.path.split(os.getcwd())[1]
+            if str(cwd[:3]) not in ("Net"):
+                print cwd[:3]
+                print "You are not in a Network Layer directory!"
+                exit()
+            src.createFileStruc.createFiles()
 
 
 def main(argv):
 
-
-
+#help people trying to run it
     try:
         opts, args = getopt.getopt(argv,"t:",["targetScope="])
     except getopt.GetoptError:
-        print 'sattcentral <TargetRange>'
+        print 'sattcentral'
         sys.exit(2)
 
     for opt, arg in opts:
@@ -29,26 +40,52 @@ def main(argv):
             inputfile = arg
         elif opt in ("-o", "--ofile"):
             outputfile = arg
+
+#get config settings
     configFile = os.path.join(os.path.dirname(__file__), 'config.yml')
     config = open(configFile, "r")
     settings = yaml.load(config)
-
-
-
-    targetRange = settings["sattProperties"]["targetRange"]
-    sourceIP = settings["sattProperties"]["sourceIP"]
     viewpoint = settings["sattProperties"]["viewpoint"]
+    optionsCreateFiles = settings["sattProperties"]["createFiles"]
     optionsNmapOn = settings["sattProperties"]["nmapOn"]
     optionsNSEsOn = settings["sattProperties"]["nseOn"]
-#    optionsNessusOn = settings["sattProperties"]["nessusOn"]
-    if optionsNmapOn == True:
-        src.sattnmap.givenTarget(targetRange, sourceIP, viewpoint, configFile)
+    optionsType = settings["sattProperties"]["type"]
+    sourceIP = settings["sattProperties"]["sourceIP"]
+    targetRange = settings["sattProperties"]["targetRange"]
+    printCommands = settings["sattProperties"]["printCommands"]
 
-    if optionsNSEsOn == True:
-        p = subprocess.Popen('rum run nmap2portscan.py --nmap-dir ./ --run > portscan.yml', shell=True)
-        p.communicate()
-        src.parsePorts.parsePorts()
-        src.sattnse.nseMain(targetRange, sourceIP, configFile)
+    scope = open("scope.yml", "r")
+    scopeConfigs = yaml.load(scope)
+    perspective = scopeConfigs["perspective"]["internal"]["beacon"][0]["ip"]
+    subnetList = scopeConfigs["subnets"]
+
+
+
+    if optionsType == "netlayer":
+        makeLocalDirs(perspective, subnetList, optionsCreateFiles)
+        if optionsNmapOn == True:
+            for subnetRange in subnetList:
+                target = subnetRange['subnet']
+                src.sattnmap.main(target, perspective, viewpoint, configFile)
+
+        if optionsNSEsOn == True:
+            p = subprocess.Popen('rum run nmap2portscan.py --nmap-dir ./ --run > portscan.yml', shell=True)
+            p.communicate()
+            src.parsePorts.parsePorts()
+            for subnetRange in subnetList:
+                target = subnetRange['subnet']
+                src.sattnse.nseMain(target, perspective, configFile)
+
+    if optionsType == "segcheck":
+        if optionsCreateFiles == True:
+            src.fabfile.makeFiles()
+        if optionsNmapOn == True:
+            if sourceIP == None and targetRange == None:
+                for i in range(0, len(subnetList)):
+                    subnet = scopeConfigs["subnets"][i]
+                    subnetRange = subnet.get('subnet')
+                    src.executeRemote.nmap(subnetRange, perspective, viewpoint, configFile)
+
 
 
 if __name__ == "__main__":
