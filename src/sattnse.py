@@ -20,7 +20,7 @@ def nseMain(targetRange, sourceIP, configFile):
     outputName = sourceIP + "_to_" + targetRange.replace("/","-")
 
     if maxRTT == None:
-        maxRTT = "5"
+        maxRTT = "50"
     if maxRetries == None:
         maxRetries = "5"
 

@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+
+import yaml
+import glob, os
+import sys
+import subprocess
+
+ipList = []
+udpPortList = []
+tcpPortList = []
+
+arguments = sys.argv
+if len(arguments) != 2:
+    print "Please pass the portscan.yml file as an arg"
+    exit()
+filename = arguments[1]
+with open(filename, 'r') as stream:
+    dataLoaded = yaml.load(stream)
+    length = len(dataLoaded)
+    for x in range(0, length):
+        width = len(dataLoaded[x]["hosts"])
+        for y in range(0,width):
+            ipList.append(dataLoaded[x]["hosts"][y]["ip"])
+            portData = dataLoaded[x]["hosts"][y]["ports"]
+            p = len(portData)
+            for u in range(0, p):
+                if  dataLoaded[x]["hosts"][y]["ports"][u][1] == "udp" and dataLoaded[x]["hosts"][y]["ports"][u][1] not in udpPortList:
+                    udpPortList.append(dataLoaded[x]["hosts"][y]["ports"][u][0])
+                if  dataLoaded[x]["hosts"][y]["ports"][u][1] == "tcp" and dataLoaded[x]["hosts"][y]["ports"][u][1] not in tcpPortList:
+                    tcpPortList.append(dataLoaded[x]["hosts"][y]["ports"][u][0])
+udpPortList = list(set(udpPortList))
+tcpPortList = list(set(tcpPortList))
+tcpPorts = ','.join(str(e) for e in tcpPortList)
+udpPorts = ','.join(str(e) for e in udpPortList)
+
+with open('retestIPs.txt', 'w') as thefile:
+    for ip in ipList:
+        thefile.write("%s\n" % ip)
+
+with open('scan-ports.txt', 'w') as portfile:
+    portfile.write("T:" + tcpPorts + "\n")
+    portfile.write("U:" + udpPorts+ "\n")
+
+print "Run this discovery: nmap --reason -d -sn --stats-every 10s -n -PE -oA retest_icmp -iL ../retestIPs.txt\n"
+
+print "\nRun this TCP scan: nmap -d -Pn --stats-every 10s -n --reason -sT --max-retries 7 -p T:" + tcpPorts + " --max-scan-delay 25ms --max-rtt-timeout 200ms -oA retest_tcp -iL ../retestIPs.txt\n"
+
+print "Run this UDP scan: nmap -d -Pn --reason --stats-every 10s -p U:" + udpPorts + " -sUV -n --max-retries 2 --min-hostgroup 16 --max-hostgroup 16 --version-intensity 0 --max-rtt-timeout 100ms --max-scan-delay 25ms -oA retest_udp -iL ../retestIPs.txt\n\n"
+exit()

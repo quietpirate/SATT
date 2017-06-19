@@ -1,24 +1,29 @@
 sattProperties:
-  targetRange: '192.168.1.0/24'
-  sourceIP: '192.168.2.101'
+  sourceIP: #''
+  targetRange: #''
   viewpoint: 'internal'
-  nmapOn: false
+  type: 'netlayer'    #segcheck or netlayer
+  createFiles: false  #create files on the beacon
+  nmapOn: true
   nseOn: false
-  nmapDir:
+  printCommands: true
 
+typeProperties:
+  user: ""
+  beaconIP: ""
 
 nmapProperties:
-  tcpMaxRTT:
-  udpMaxRTT:
-  initial-rtt-timeout:
-  tcpMaxHostGroup: "4"
-  tcpMinHostGroup: "2"
+  tcpMaxRTT: "20"
+  udpMaxRTT: "20"
+  initial-rtt-timeout: "20"
+  tcpMaxHostGroup: "8"
+  tcpMinHostGroup: "8"
   udpMaxHostGroup:
   udpMinHostGroup:
   max-retries:
   min-rate:
-  exclude-hosts: '192.168.1.100,192.168.2.101,192.168.2.100,192.168.3.100'
+  exclude-hosts: ''
 
 nseProperties:
-  maxRTT: "50"
+  maxRTT:
   max-retries:
